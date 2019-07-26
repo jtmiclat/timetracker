@@ -1,0 +1,11 @@
+# Config
+.envrc
+.env
+
+# Python
+__pycache__/
+venv/
+*.pyc
+
+# pyenv files
+.python-version
