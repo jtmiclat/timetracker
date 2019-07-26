@@ -1,14 +1,13 @@
 import os
 from datetime import datetime, timedelta
 from itertools import groupby
-from pathlib import Path
 
 import pytz
 import requests
 from requests.auth import HTTPBasicAuth
 
 
-def main(token=None, date=None):
+def main(token, date=None):
     entries = get_entries(date, token)
     projects = get_projects(entries, token)
     summary = summarize(entries, projects)
@@ -64,6 +63,7 @@ def gen_report(summary):
         for description, time in entries.items():
             r += f"\t {time/3600:.2f} {'hrs' if time>1.0 else 'hr'} #{project.lower()} {description}\n"
     return r
+
 
 if "__main__" == __name__:
     token = os.getenv("TOGGL_TOKEN", None)
