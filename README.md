@@ -24,3 +24,4 @@ pre-commit install
 - [ ] Figure out timezones
 - [ ] Add Docuemntaiton clean up code
 - [ ] Add some logging
+- [ ] Set up ci/cd
