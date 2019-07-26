@@ -18,3 +18,9 @@ Setting up development
 pip install -r requirements.txt requirements-dev.txt
 pre-commit install
 ```
+
+## TODO
+
+- [ ] Figure out timezones
+- [ ] Add Docuemntaiton clean up code
+- [ ] Add some logging
