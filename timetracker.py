@@ -63,9 +63,9 @@ def gen_report(summary):
         for description, time in entries.items():
             if time < 0:
                 print(
-                    f"WARN: Got negative time for {description}. Mostly there is a running timer\n"
+                    f"WARN: Got negative time for {description}. Mostly there is a running timer"
                 )
-            r += f"\t {time/3600:.2f} {'hrs' if time>1.0 else 'hr'} # {project.lower()} {description}\n"
+            r += f"- {time/3600:.2f} {'hrs' if time>1.0 else 'hr'} #{project.lower()} {description}\n"
     return r
 
 
@@ -74,4 +74,5 @@ if "__main__" == __name__:
     if token is None:
         raise ValueError("Need environment variable TOGGL_TOKEN")
     summary = main(token)
+    print("\n")
     print(summary)
