@@ -9,3 +9,6 @@ venv/
 
 # pyenv files
 .python-version
+
+# env var
+.envrc
