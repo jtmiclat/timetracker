@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta
-from itertools import groupby
+from toolz import groupby
 
 import pytz
 import requests
@@ -17,6 +17,7 @@ def main(token, date=None):
 def get_entries(date, token):
     now = datetime.now(pytz.timezone("Asia/Manila"))
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_date = start_date - timedelta(days=1)
     end_date = start_date + timedelta(days=1)
     entries = requests.get(
         "https://www.toggl.com/api/v8/time_entries",
@@ -45,13 +46,13 @@ def summarize(entries, projects):
     def _summarize(vals):
         summary = {
             k: sum(map(lambda i: i["duration"], v))
-            for k, v in groupby(vals, lambda x: x["description"])
+            for k, v in groupby(seq=vals, key=lambda x: x["description"]).items()
         }
         return summary
 
     summary = {
-        projects.get(k): _summarize(list(v))
-        for k, v in groupby(entries, key=lambda x: x.get("pid"))
+        projects.get(k): _summarize(v)
+        for k, v in groupby(seq=entries, key=lambda x: x.get("pid")).items()
         if k is not None
     }
     return summary
