@@ -64,7 +64,7 @@ def gen_report(summary):
         for description, time in entries.items():
             if time < 0:
                 print(
-                    f"WARN: Got negative time for {description}. Mostly there is a running timer"
+                    f"WARN: Got negative time for {description}. There might be a runnig timer"
                 )
             r += f"- {time/3600:.2f} {'hrs' if time>1.0 else 'hr'} #{project.lower()} {description}\n"
     return r
