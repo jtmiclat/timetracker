@@ -17,7 +17,6 @@ def main(token, date=None):
 def get_entries(date, token):
     now = datetime.now(pytz.timezone("Asia/Manila"))
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_date = start_date - timedelta(days=1)
     end_date = start_date + timedelta(days=1)
     entries = requests.get(
         "https://www.toggl.com/api/v8/time_entries",
