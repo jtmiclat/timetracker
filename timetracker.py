@@ -11,12 +11,13 @@ def main(token, date=None):
     entries = get_entries(date, token)
     projects = get_projects(entries, token)
     summary = summarize(entries, projects)
-    return gen_report(summary)
+    return gen_report(summary, date=date)
 
 
 def get_entries(date, token):
-    now = datetime.now(pytz.timezone("Asia/Manila"))
-    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if date is None:
+        date = datetime.now(pytz.timezone("Asia/Manila"))
+    start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_date = start_date + timedelta(days=1)
     entries = requests.get(
         "https://www.toggl.com/api/v8/time_entries",
@@ -57,8 +58,11 @@ def summarize(entries, projects):
     return summary
 
 
-def gen_report(summary):
-    r = """checkin\n"""
+def gen_report(summary, date=None):
+    if date:
+        r = f"checkin {date.strftime('%Y-%m-%d')}\n"
+    else:
+        r = f"checkin\n"
     for project, entries in summary.items():
         for description, time in entries.items():
             if time < 0:
@@ -74,5 +78,3 @@ if "__main__" == __name__:
     if token is None:
         raise ValueError("Need environment variable TOGGL_TOKEN")
     summary = main(token)
-    print("\n")
-    print(summary)
