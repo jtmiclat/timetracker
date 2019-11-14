@@ -44,11 +44,14 @@ def get_project_by_id(id, token):
 
 def summarize(entries, projects):
     def _summarize(vals):
-        summary = {
-            k: sum(map(lambda i: i["duration"], v))
-            for k, v in groupby(seq=vals, key=lambda x: x["description"]).items()
-        }
-        return summary
+        try:
+            summary = {
+                k: sum(map(lambda i: i["duration"], v))
+                for k, v in groupby(seq=vals, key=lambda x: x["description"]).items()
+            }
+            return summary
+        except:
+            return {}
 
     summary = {
         projects.get(k): _summarize(v)
@@ -78,3 +81,4 @@ if "__main__" == __name__:
     if token is None:
         raise ValueError("Need environment variable TOGGL_TOKEN")
     summary = main(token)
+    print(summary)
