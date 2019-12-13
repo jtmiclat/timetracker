@@ -2,12 +2,15 @@ import os
 from datetime import datetime, timedelta
 from toolz import groupby
 
+
+import click
+import pendulum
 import pytz
 import requests
 from requests.auth import HTTPBasicAuth
 
 
-def main(token, date=None):
+def get_report(token, date=None):
     entries = get_entries(date, token)
     projects = get_projects(entries, token)
     summary = summarize(entries, projects)
@@ -50,7 +53,7 @@ def summarize(entries, projects):
                 for k, v in groupby(seq=vals, key=lambda x: x["description"]).items()
             }
             return summary
-        except:
+        except:  # noqa
             return {}
 
     summary = {
@@ -76,9 +79,23 @@ def gen_report(summary, date=None):
     return r
 
 
-if "__main__" == __name__:
+@click.command()
+@click.option("--since", type=str)
+def main(since):
     token = os.getenv("TOGGL_TOKEN", None)
     if token is None:
         raise ValueError("Need environment variable TOGGL_TOKEN")
-    summary = main(token)
-    print(summary)
+    now = pendulum.now()
+    if since:
+        start = pendulum.parse(since)
+    else:
+        start = now
+    summaries = [
+        get_report(token, start.add(days=i)) for i in range((now - start).days + 1)
+    ]
+    for summary in summaries:
+        print(summary)
+
+
+if "__main__" == __name__:
+    main()
