@@ -1,13 +1,12 @@
 import os
 from datetime import datetime, timedelta
-from toolz import groupby
-
 
 import click
 import pendulum
 import pytz
 import requests
 from requests.auth import HTTPBasicAuth
+from toolz import groupby
 
 
 def get_report(token, date=None):
