@@ -1,35 +1,21 @@
-import os
-from datetime import datetime, timedelta
-
 import click
 import pendulum
-import pytz
 import requests
 from requests.auth import HTTPBasicAuth
-from toolz import groupby
+from toolz import groupby, valmap
 
 
-def get_report(token, date=None):
-    entries = get_entries(date, token)
-    projects = get_projects(entries, token)
-    summary = summarize(entries, projects)
-    return gen_report(summary, date=date)
-
-
-def get_entries(date, token):
-    if date is None:
-        date = datetime.now(pytz.timezone("Asia/Manila"))
-    start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = start_date + timedelta(days=1)
+def get_entries(token, start):
+    start_date = start.set(hour=0, minute=0, second=0, microsecond=0)
     entries = requests.get(
         "https://www.toggl.com/api/v8/time_entries",
-        params={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+        params={"start_date": start_date.isoformat()},
         auth=HTTPBasicAuth(token, "api_token"),
     ).json()
     return entries
 
 
-def get_projects(entries, token):
+def get_projects(token, entries):
     project_ids = {e.get("pid") for e in entries if e.get("pid") is not None}
     projects_info = {pid: get_project_by_id(pid, token=token) for pid in project_ids}
     projects = {k: v["name"] for k, v in projects_info.items()}
@@ -44,57 +30,66 @@ def get_project_by_id(id, token):
     return project.json().get("data")
 
 
-def summarize(entries, projects):
-    def _summarize(vals):
-        try:
-            summary = {
-                k: sum(map(lambda i: i["duration"], v))
-                for k, v in groupby(seq=vals, key=lambda x: x["description"]).items()
-            }
-            return summary
-        except:  # noqa
-            return {}
+def summarize(entries, projects, timezone):
+    mod_entries = [
+        {
+            "date": pendulum.parse(e["start"])
+            .in_timezone(timezone)
+            .format("YYYY-MM-DD"),
+            **e,
+        }
+        for e in entries
+    ]
+    summary = valmap(
+        lambda e: sum(map(lambda i: i["duration"], e)),
+        groupby(
+            key=lambda x: (x["date"], x.get("pid"), x["description"]), seq=mod_entries
+        ),
+    )
+    formated_summaries = [
+        {
+            "date": k[0],
+            "project": projects.get(k[1]),
+            "description": k[2],
+            "duration": v,
+        }
+        for k, v in summary.items()
+    ]
+    return groupby("date", formated_summaries)
 
-    summary = {
-        projects.get(k): _summarize(v)
-        for k, v in groupby(seq=entries, key=lambda x: x.get("pid")).items()
-        if k is not None
-    }
-    return summary
 
-
-def gen_report(summary, date=None):
-    if date:
-        r = f"checkin {date.strftime('%Y-%m-%d')}\n"
-    else:
-        r = f"checkin\n"
-    for project, entries in summary.items():
-        for description, time in entries.items():
-            if time < 0:
-                print(
-                    f"WARN: Got negative time for {description}. There might be a runnig timer"
-                )
-            r += f"- {time/3600:.2f} {'hrs' if time>1.0 else 'hr'} #{project.lower()} {description}\n"
+def format_report(date, summary):
+    r = f"checkin {date}\n"
+    for entry in summary:
+        project = entry["project"] if entry["project"] else "no-project"
+        description = entry["description"]
+        duration_hrs = entry["duration"] / 3600
+        if duration_hrs < 0:
+            print(
+                f"WARN: Got negative time for {description}. There might be a running timer"
+            )
+        r += f"- {duration_hrs:.2f} {'hrs' if duration_hrs>1.0 else 'hr'} #{project.lower()} {description}\n"
     return r
 
 
 @click.command()
 @click.option("--since", type=str)
-def main(since):
-    token = os.getenv("TOGGL_TOKEN", None)
-    if token is None:
-        raise ValueError("Need environment variable TOGGL_TOKEN")
-    now = pendulum.now()
+@click.option("--token", type=str)
+@click.option("--timezone", type=str, default="Asia/Manila")
+def main(since, token, timezone):
+    if token is None or token == "":
+        raise ValueError("Token variable is needed")
+    now = pendulum.now(timezone)
     if since:
-        start = pendulum.parse(since)
+        start = pendulum.parse(since).set(tz=timezone)
     else:
         start = now
-    summaries = [
-        get_report(token, start.add(days=i)) for i in range((now - start).days + 1)
-    ]
-    for summary in summaries:
-        print(summary)
+    entries = get_entries(token, start)
+    projects = get_projects(token, entries)
+    summaries = summarize(entries, projects, timezone)
+    for date, summary in summaries.items():
+        print(format_report(date, summary))
 
 
 if "__main__" == __name__:
-    main()
+    main(auto_envvar_prefix="TIMETRACKER")
