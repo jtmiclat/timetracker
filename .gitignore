@@ -12,3 +12,5 @@ venv/
 
 # env var
 .envrc
+
+.vscode/
