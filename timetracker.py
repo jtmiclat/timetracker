@@ -43,7 +43,7 @@ def summarize(entries, projects, timezone):
     summary = valmap(
         lambda e: sum(map(lambda i: i["duration"], e)),
         groupby(
-            key=lambda x: (x["date"], x.get("pid"), x["description"]), seq=mod_entries
+            key=lambda x: (x["date"], x.get("pid"), x.get("description")), seq=mod_entries
         ),
     )
     formated_summaries = [
