@@ -8,9 +8,9 @@ Create quick and short daily summaries of your toggl entries per project per des
 
 You would need python version 3.6 or above. You can check your current version by running `python3 -V`
 
-You will need to generate Toggl API token which can be found in your [Toggl profile](https://toggl.com/app/profile) at the bottom of the page.
+You will need to generate Toggl API token which can be found at the bottom of the page of your [Toggl profile](https://track.toggl.com/app/profile).
 
-Install the dependencies then run the script. If no `--since` is provided, will only summarize today's entries.
+Install the dependencies then run the script. If `--since` is not provided, timetracker will only summarize entries for today.
 
 ```bash
 $ pip install -r requirements.txt
@@ -27,6 +27,11 @@ the token arg
 ```
 export TIMETRACKER_TOKEN=<toggl_token>
 python3 timetracker.py --since 2020-01-01
+```
+
+You can also set the timezone. The default value is `Asia/Manila`
+```
+python3 timetracker.py --since 2020-01-01 --timezone='Asia/Manila'
 ```
 
 The script applies a `.lower()` to the the project name and places a `#` infront of the project. `Project-1` will be converted to `#project-1`
