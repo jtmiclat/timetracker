@@ -8,7 +8,7 @@ from toolz import groupby, valmap
 def get_entries(token, start):
     start_date = start.set(hour=0, minute=0, second=0, microsecond=0)
     entries = requests.get(
-        "https://www.toggl.com/api/v8/time_entries",
+        "https://api.track.toggl.com/api/v8/time_entries",
         params={"start_date": start_date.isoformat()},
         auth=HTTPBasicAuth(token, "api_token"),
     ).json()
