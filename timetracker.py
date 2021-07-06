@@ -43,7 +43,8 @@ def summarize(entries, projects, timezone):
     summary = valmap(
         lambda e: sum(map(lambda i: i["duration"], e)),
         groupby(
-            key=lambda x: (x["date"], x.get("pid"), x.get("description")), seq=mod_entries
+            key=lambda x: (x["date"], x.get("pid"), x.get("description")),
+            seq=mod_entries,
         ),
     )
     formated_summaries = [
@@ -65,7 +66,7 @@ def format_report(date, summary):
         description = entry["description"]
         duration_hrs = entry["duration"] / 3600
         if duration_hrs < 0:
-            print(
+            click.echo(
                 f"WARN: Got negative time for {description}. There might be a running timer"
             )
         r += f"- {duration_hrs:.2f} {'hrs' if duration_hrs>1.0 else 'hr'} #{project.lower()} {description}\n"
@@ -74,21 +75,31 @@ def format_report(date, summary):
 
 @click.command()
 @click.option("--since", type=str)
+@click.option("-y", "--yesterday", is_flag=True)
+@click.option("-w", "--week", is_flag=True)
+@click.option("-l", "--lastweek", is_flag=True)
 @click.option("--token", type=str)
 @click.option("--timezone", type=str, default="Asia/Manila")
-def main(since, token, timezone):
+def main(since, token, timezone, yesterday, week, lastweek):
     if token is None or token == "":
-        raise ValueError("Token variable is needed")
+        raise click.BadOptionUsage("token", "Token variable is needed")
     now = pendulum.now(timezone)
     if since:
         start = pendulum.parse(since).set(tz=timezone)
+    elif yesterday:
+        start = now.subtract(days=1)
+    elif week:
+        start = now.start_of("week")
+    elif lastweek:
+        start = now.subtract(weeks=1).start_of("week")
     else:
         start = now
+    click.echo(f"Getting entries starting from {start.to_date_string()}")
     entries = get_entries(token, start)
     projects = get_projects(token, entries)
     summaries = summarize(entries, projects, timezone)
     for date, summary in summaries.items():
-        print(format_report(date, summary))
+        click.echo(format_report(date, summary))
 
 
 if "__main__" == __name__:
