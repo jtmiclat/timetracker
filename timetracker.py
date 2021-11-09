@@ -24,7 +24,7 @@ def get_projects(token, entries):
 
 def get_project_by_id(id, token):
     project = requests.get(
-        f"https://www.toggl.com/api/v8/projects/{id}",
+        f"https://api.track.toggl.com/api/v8/projects/{id}",
         auth=HTTPBasicAuth(token, "api_token"),
     )
     return project.json().get("data")
